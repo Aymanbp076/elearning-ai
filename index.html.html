@@ -1,0 +1,541 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Logindetectie — E-learning</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0f1117;color:#e8eaf0;min-height:100vh;font-size:14px}
+.topbar{background:#161b22;border-bottom:1px solid #21262d;padding:.85rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:14px;font-weight:600;color:#c9d1d9}
+.topbar-sub{font-size:11px;color:#6e7681;margin-top:1px}
+.prog-outer{height:3px;background:#21262d;margin:0}
+.prog-inner{height:3px;background:linear-gradient(90deg,#6e40c9,#a371f7);transition:width .4s}
+.layout{display:flex;min-height:calc(100vh - 52px)}
+.sidebar{width:220px;min-width:220px;background:#0d1117;border-right:1px solid #21262d;padding:1rem 0;overflow-y:auto}
+.sid-group{font-size:10px;color:#6e7681;text-transform:uppercase;letter-spacing:.08em;padding:.5rem 1rem .25rem}
+.sid-item{display:flex;align-items:center;gap:8px;padding:.5rem 1rem;cursor:pointer;border-left:2px solid transparent;transition:all .15s}
+.sid-item:hover{background:#161b22}
+.sid-item.active{background:#161b22;border-left-color:#a371f7}
+.sid-num{width:22px;height:22px;border-radius:50%;border:1.5px solid #30363d;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;background:#0d1117;color:#8b949e}
+.sid-num.done{background:#1f3a2a;border-color:#3fb950;color:#3fb950;font-size:11px}
+.sid-num.cur{background:#2d1f5e;border-color:#a371f7;color:#a371f7}
+.sid-label{font-size:12px;color:#c9d1d9;line-height:1.3}
+.sid-label small{display:block;font-size:10px;color:#6e7681}
+.main{flex:1;overflow-y:auto;padding:2rem 2.5rem;max-width:820px}
+.slide{display:none}.slide.active{display:block}
+.les-tag{display:inline-block;font-size:10px;color:#a371f7;background:#2d1f5e33;border:1px solid #6e40c944;border-radius:20px;padding:2px 10px;margin-bottom:.6rem}
+h1{font-size:22px;font-weight:700;color:#e6edf3;line-height:1.2;margin-bottom:.4rem}
+.lead{font-size:14px;color:#8b949e;line-height:1.7;margin-bottom:1.5rem}
+.card{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:1.1rem 1.25rem;margin-bottom:.85rem}
+.card-hd{display:flex;align-items:center;gap:8px;margin-bottom:.5rem}
+.card-ico{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.card-title{font-size:13px;font-weight:600;color:#e6edf3}
+.card-body{font-size:13px;color:#8b949e;line-height:1.65}
+.hl{background:#161b22;border:1px solid #6e40c955;border-left:3px solid #a371f7;border-radius:0 8px 8px 0;padding:.9rem 1.1rem;margin:1rem 0;font-size:13px;color:#c9d1d9;line-height:1.7}
+.model-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:1rem 0}
+.mcard{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:1rem}
+.mcard.winner{border-color:#a371f77a;background:#2d1f5e1a}
+.mcard-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;margin-bottom:.4rem}
+.badge-used{background:#2d1f5e;color:#a371f7}
+.badge-extra{background:#1f3a2a;color:#3fb950}
+.mcard-name{font-size:13px;font-weight:600;color:#e6edf3;margin-bottom:.3rem}
+.mcard-body{font-size:12px;color:#6e7681;line-height:1.5}
+.ensemble-box{background:#0d1117;border:1px solid #a371f755;border-radius:10px;padding:1.1rem;margin:1rem 0}
+.ensemble-title{font-size:12px;font-weight:600;color:#a371f7;margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.ens-row{display:flex;align-items:center;gap:10px;margin-bottom:.5rem}
+.ens-label{font-size:12px;color:#c9d1d9;width:140px;flex-shrink:0}
+.ens-bar-outer{flex:1;height:8px;background:#21262d;border-radius:4px;overflow:hidden}
+.ens-bar-inner{height:8px;border-radius:4px}
+.ens-pct{font-size:11px;color:#8b949e;width:32px;text-align:right;flex-shrink:0}
+.step-list{display:flex;flex-direction:column;gap:.75rem;margin:1rem 0}
+.step{display:flex;gap:12px;align-items:flex-start}
+.step-n{width:24px;height:24px;border-radius:50%;background:#2d1f5e;border:1.5px solid #a371f7;color:#a371f7;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-body .st{font-size:13px;font-weight:600;color:#e6edf3;margin-bottom:2px}
+.step-body .sd{font-size:12px;color:#8b949e;line-height:1.6}
+.tree-box{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:1.25rem;margin:1rem 0;font-size:12px;line-height:2}
+.tq{color:#a371f7;font-weight:600}
+.tnode{padding-left:1rem;border-left:1px dashed #30363d}
+.ta{color:#6e7681;font-size:11px}
+.tsafe{color:#3fb950;font-weight:600}
+.tdanger{color:#f85149;font-weight:600}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:1rem 0}
+.met{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:.75rem;text-align:center}
+.met-val{font-size:18px;font-weight:700;color:#a371f7}
+.met-lbl{font-size:10px;color:#6e7681;margin-top:2px}
+.sim-wrap{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:1.25rem;margin:1rem 0}
+.sim-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.sfield label{font-size:10px;color:#6e7681;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+.sfield select,.sfield input[type=range]{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:12px;padding:6px 8px;outline:none}
+.sfield input[type=range]{accent-color:#a371f7;padding:4px 0;border:none;background:transparent}
+.drow{display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #21262d;font-size:12px}
+.drow:last-child{border-bottom:none}
+.dk{color:#8b949e}.dv{color:#e6edf3;font-weight:500}
+.sim-res{border-radius:8px;padding:.9rem 1rem;text-align:center;font-size:13px;font-weight:600;margin-top:1rem;transition:all .3s}
+.res-safe{background:#1f3a2a;border:1px solid #3fb95055;color:#3fb950}
+.res-warn{background:#3a2e1a;border:1px solid #f39c1255;color:#f39c12}
+.res-danger{background:#3a1f1f;border:1px solid #f8514955;color:#f85149}
+.res-neutral{background:#21262d;border:1px solid #30363d;color:#8b949e}
+.risk-bar-outer{height:10px;background:#21262d;border-radius:5px;margin:.5rem 0;overflow:hidden}
+.risk-bar-inner{height:10px;border-radius:5px;transition:width .4s}
+.factors-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:.75rem}
+.factor{background:#0d1117;border-radius:6px;padding:.5rem .75rem;font-size:11px;display:flex;justify-content:space-between}
+.fk{color:#8b949e}.fv-ok{color:#3fb950;font-weight:600}.fv-risk{color:#f85149;font-weight:600}.fv-mid{color:#f39c12;font-weight:600}
+.qwrap{margin:1rem 0}
+.qq{font-size:13px;font-weight:600;color:#e6edf3;margin-bottom:.75rem}
+.qopts{display:flex;flex-direction:column;gap:6px}
+.qo{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:.7rem 1rem;font-size:12px;color:#c9d1d9;cursor:pointer;text-align:left;width:100%;transition:all .15s}
+.qo:hover:not(:disabled){background:#161b22;border-color:#a371f7}
+.qo.correct{background:#1f3a2a;border-color:#3fb950;color:#3fb950}
+.qo.wrong{background:#3a1f1f;border-color:#f85149;color:#f85149}
+.qo:disabled{cursor:default}
+.qfb{font-size:12px;margin-top:.6rem;padding:.6rem .9rem;border-radius:6px;display:none}
+.qfb.show{display:block}
+.qfb.good{background:#1f3a2a55;color:#3fb950}
+.qfb.bad{background:#3a1f1f55;color:#f85149}
+.score-box{text-align:center;padding:1.5rem;margin-top:1rem;background:#161b22;border:1px solid #21262d;border-radius:12px}
+.score-circle{width:80px;height:80px;border-radius:50%;border:3px solid #a371f7;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;flex-direction:column}
+.score-n{font-size:22px;font-weight:700;color:#a371f7}
+.score-lbl{font-size:10px;color:#6e7681}
+.score-msg{font-size:14px;color:#c9d1d9;font-weight:600}
+.score-sub{font-size:12px;color:#6e7681;margin-top:.25rem}
+.navfoot{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1.25rem;border-top:1px solid #21262d}
+.btn{padding:.55rem 1.2rem;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-g{background:transparent;border:1px solid #30363d;color:#8b949e}
+.btn-g:hover{border-color:#8b949e;color:#c9d1d9}
+.btn-p{background:#6e40c9;color:#fff}
+.btn-p:hover{background:#7d4ed8}
+.ethrow{display:flex;gap:10px;margin-bottom:.85rem;align-items:flex-start}
+.ethdot{width:7px;height:7px;border-radius:50%;background:#a371f7;margin-top:5px;flex-shrink:0}
+.etht{font-size:13px;font-weight:600;color:#e6edf3;margin-bottom:2px}
+.ethd{font-size:12px;color:#8b949e;line-height:1.6}
+.tag-badge{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px}
+.tag-hl{background:#3a1f1f;color:#f85149}
+.tag-ok{background:#1f3a2a;color:#3fb950}
+.conf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:1rem 0;max-width:300px}
+.conf-cell{border-radius:7px;padding:.75rem;text-align:center}
+.conf-val{font-size:18px;font-weight:700}
+.conf-lbl{font-size:10px;margin-top:2px;opacity:.8}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">AI Logindetectie — E-learning</div>
+    <div class="topbar-sub">Interactieve module · Ayman Lamou · ATIX Slim Beslissen met AI</div>
+  </div>
+  <div style="font-size:11px;color:#6e7681" id="les-badge">Les 1 van 5</div>
+</div>
+<div class="prog-outer"><div class="prog-inner" id="progbar" style="width:0%"></div></div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sid-group">Module</div>
+    <div class="sid-item active" id="nav0" onclick="go(0)">
+      <div class="sid-num cur" id="ic0">1</div>
+      <div class="sid-label">Het probleem<small>Waarom AI?</small></div>
+    </div>
+    <div class="sid-item" id="nav1" onclick="go(1)">
+      <div class="sid-num" id="ic1">2</div>
+      <div class="sid-label">De 4 modellen<small>Hoe ze werken</small></div>
+    </div>
+    <div class="sid-item" id="nav2" onclick="go(2)">
+      <div class="sid-num" id="ic2">3</div>
+      <div class="sid-label">Resultaten<small>Wat werkte het best?</small></div>
+    </div>
+    <div class="sid-item" id="nav3" onclick="go(3)">
+      <div class="sid-num" id="ic3">4</div>
+      <div class="sid-label">Simulatie<small>Probeer het zelf</small></div>
+    </div>
+    <div class="sid-item" id="nav4" onclick="go(4)">
+      <div class="sid-num" id="ic4">5</div>
+      <div class="sid-label">Ethiek & quiz<small>Verantwoord gebruik</small></div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- LES 1 -->
+    <div class="slide active" id="s0">
+      <div class="les-tag">Les 1 — Probleem & aanpak</div>
+      <h1>Hoe weet je wie er echt inlogt?</h1>
+      <p class="lead">Elke dag loggen medewerkers honderden keren in op bedrijfssystemen. Maar wat als een hacker dat ook doet — met een gestolen wachtwoord?</p>
+      <div class="card">
+        <div class="card-hd"><div class="card-ico" style="background:#3a1f1f">⚠</div><div class="card-title">Het probleem</div></div>
+        <div class="card-body">Bedrijven met gevoelige data worden steeds vaker aangevallen via gestolen wachtwoorden. Een hacker die inlogt ziet er voor een systeem precies hetzelfde uit als een echte medewerker. Handmatig beoordelen is onmogelijk: te traag, te foutgevoelig en 24/7 niet vol te houden.</div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-ico" style="background:#1f2a3a">📊</div><div class="card-title">Wat analyseert het systeem?</div></div>
+        <div class="card-body">Bij elke inlogpoging worden automatisch gegevens vastgelegd: tijdstip, land van herkomst, type apparaat, aantal mislukte pogingen, sessieduur en IP-wisselingen. Samen vormen die een gedragsprofiel.</div>
+      </div>
+      <div class="hl"><strong style="color:#a371f7">Centrale vraag:</strong><br>Is deze inlogpoging afkomstig van de echte medewerker — of van iemand die zich voordoet als die persoon?</div>
+      <div class="card">
+        <div class="card-hd"><div class="card-ico" style="background:#1f3a2a">🔬</div><div class="card-title">Aanpak in dit project</div></div>
+        <div class="card-body">We bouwen een AI-systeem dat zelf leert wat normaal gedrag is. Daarvoor testen we <strong style="color:#c9d1d9">4 verschillende AI-modellen</strong> en combineren de beste tot één ensemble-systeem. In de volgende les leer je hoe elk model werkt.</div>
+      </div>
+      <div class="navfoot"><div></div><button class="btn btn-p" onclick="go(1)">Volgende les →</button></div>
+    </div>
+
+    <!-- LES 2 -->
+    <div class="slide" id="s1">
+      <div class="les-tag">Les 2 — De 4 AI-modellen</div>
+      <h1>Welke modellen worden gebruikt?</h1>
+      <p class="lead">Er zijn 4 modellen ingezet — elk met een eigen aanpak. Ze worden uiteindelijk gecombineerd in een ensemble voor het sterkste eindoordeel.</p>
+
+      <div class="model-grid">
+        <div class="mcard winner">
+          <div class="mcard-badge badge-used">Supervised</div>
+          <div class="mcard-name">🌳 Decision Tree</div>
+          <div class="mcard-body">Stelt ja/nee-vragen op basis van de data. Volledig uitlegbaar: je kunt letterlijk de beslisregels lezen. Goed voor uitleg aan management. Nadeel: kan overfitten bij te veel diepte (opgelost via max_depth=6).</div>
+        </div>
+        <div class="mcard winner">
+          <div class="mcard-badge badge-used">Supervised</div>
+          <div class="mcard-name">🌲 Random Forest</div>
+          <div class="mcard-body">Combineert 200 Decision Trees via stemmen. Veel robuuster dan één boom. Levert automatisch feature importance: welke signalen tellen het meest? Gekozen gewicht in ensemble: <strong style="color:#a371f7">45%</strong>.</div>
+        </div>
+        <div class="mcard winner">
+          <div class="mcard-badge badge-used">Supervised</div>
+          <div class="mcard-name">⚡ XGBoost</div>
+          <div class="mcard-body">Bouwt bomen sequentieel: elke nieuwe boom corrigeert de fouten van de vorige. State-of-the-art prestaties. Gekozen gewicht in ensemble: <strong style="color:#a371f7">40%</strong>.</div>
+        </div>
+        <div class="mcard winner">
+          <div class="mcard-badge badge-extra">Unsupervised</div>
+          <div class="mcard-name">🔬 Isolation Forest</div>
+          <div class="mcard-body">Enige model dat <em>geen labels</em> nodig heeft. Detecteert afwijkingen puur op basis van "anders zijn". Perfect voor situaties zonder historische data. Gewicht in ensemble: <strong style="color:#3fb950">15%</strong>.</div>
+        </div>
+      </div>
+
+      <div class="ensemble-box">
+        <div class="ensemble-title">Ensemble — gewogen combinatie van alle 3 supervised modellen</div>
+        <div class="ens-row"><div class="ens-label">Random Forest</div><div class="ens-bar-outer"><div class="ens-bar-inner" style="width:45%;background:#a371f7"></div></div><div class="ens-pct">45%</div></div>
+        <div class="ens-row"><div class="ens-label">XGBoost</div><div class="ens-bar-outer"><div class="ens-bar-inner" style="width:40%;background:#7d4ed8"></div></div><div class="ens-pct">40%</div></div>
+        <div class="ens-row"><div class="ens-label">Isolation Forest</div><div class="ens-bar-outer"><div class="ens-bar-inner" style="width:15%;background:#3fb950"></div></div><div class="ens-pct">15%</div></div>
+        <div style="font-size:11px;color:#6e7681;margin-top:.5rem">Door te combineren compenseren de modellen elkaars zwaktes — robuuster dan één enkel model.</div>
+      </div>
+
+      <div class="tree-box">
+        <div style="font-size:11px;color:#6e7681;margin-bottom:.5rem">Voorbeeld: Decision Tree beslisregels</div>
+        <div class="tq">Is het land van inlog riskant? (Rusland, China, Noord-Korea...)</div>
+        <div class="tnode">
+          <div class="ta">→ Ja: <span class="tdanger">⚠ Verdacht</span></div>
+          <div class="ta">→ Nee: Is het tijdstip 's nachts (00–06u)?</div>
+          <div class="tnode">
+            <div class="ta">→ Ja: Meer dan 3 mislukte pogingen?</div>
+            <div class="tnode">
+              <div class="ta">→ Ja: <span class="tdanger">⚠ Verdacht</span></div>
+              <div class="ta">→ Nee: <span class="tsafe">✓ Normaal</span></div>
+            </div>
+            <div class="ta">→ Nee: <span class="tsafe">✓ Normaal</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="navfoot"><button class="btn btn-g" onclick="go(0)">← Vorige</button><button class="btn btn-p" onclick="go(2)">Volgende les →</button></div>
+    </div>
+
+    <!-- LES 3 -->
+    <div class="slide" id="s2">
+      <div class="les-tag">Les 3 — Resultaten & evaluatie</div>
+      <h1>Hoe goed werken de modellen?</h1>
+      <p class="lead">Na het trainen worden de modellen getest op nieuwe data. We kijken niet alleen naar accuracy, maar vooral naar <strong style="color:#c9d1d9">recall</strong> — want een gemiste hacker is gevaarlijker dan een valse melding.</p>
+
+      <div class="card">
+        <div class="card-hd"><div class="card-ico" style="background:#1f2a3a">📐</div><div class="card-title">Waarom recall zo belangrijk is</div></div>
+        <div class="card-body">
+          <strong style="color:#f85149">False Negative</strong> = echte hacker gemist → <span class="tag-badge tag-hl">Hoog risico</span><br>
+          <strong style="color:#f39c12">False Positive</strong> = normale medewerker onterecht geblokkeerd → <span class="tag-badge tag-ok">Irritant, niet gevaarlijk</span><br><br>
+          Recall = hoeveel procent van de echte verdachte logins herkent het model? Hoe hoger, hoe beter.
+        </div>
+      </div>
+
+      <div style="font-size:12px;font-weight:600;color:#c9d1d9;margin:.75rem 0 .4rem">Modelscores (indicatief op testset)</div>
+      <div class="metrics-grid">
+        <div class="met"><div class="met-val">~97%</div><div class="met-lbl">RF Accuracy</div></div>
+        <div class="met"><div class="met-val">~98%</div><div class="met-lbl">XGB Accuracy</div></div>
+        <div class="met"><div class="met-val">~95%</div><div class="met-lbl">DT Accuracy</div></div>
+        <div class="met"><div class="met-val">~80%</div><div class="met-lbl">IsoForest Recall</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><div class="card-ico" style="background:#2d1f5e">🔢</div><div class="card-title">Confusion matrix — hoe lees je die?</div></div>
+        <div class="card-body">
+          <div class="conf-grid">
+            <div class="conf-cell" style="background:#1f3a2a">
+              <div class="conf-val" style="color:#3fb950">TN</div>
+              <div class="conf-lbl" style="color:#3fb950">Normaal ✓ correct</div>
+            </div>
+            <div class="conf-cell" style="background:#3a2e1a">
+              <div class="conf-val" style="color:#f39c12">FP</div>
+              <div class="conf-lbl" style="color:#f39c12">Normaal fout geblokkeerd</div>
+            </div>
+            <div class="conf-cell" style="background:#3a1f1f">
+              <div class="conf-val" style="color:#f85149">FN ⚠</div>
+              <div class="conf-lbl" style="color:#f85149">Hacker GEMIST!</div>
+            </div>
+            <div class="conf-cell" style="background:#1f3a2a">
+              <div class="conf-val" style="color:#3fb950">TP</div>
+              <div class="conf-lbl" style="color:#3fb950">Verdacht ✓ herkend</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#6e7681;margin-top:.75rem">FN (links-onder) is de gevaarlijkste fout in een beveiligingssysteem.</div>
+        </div>
+      </div>
+
+      <div class="hl">Na hyperparameter tuning via RandomizedSearchCV (30 combinaties × 5 folds) verbeterde het Random Forest model significant. SHAP-waarden leggen daarna uit <em>waarom</em> het model een specifieke login als verdacht markeert.</div>
+
+      <div class="navfoot"><button class="btn btn-g" onclick="go(1)">← Vorige</button><button class="btn btn-p" onclick="go(3)">Volgende les →</button></div>
+    </div>
+
+    <!-- LES 4 -->
+    <div class="slide" id="s3">
+      <div class="les-tag">Les 4 — Simulatie</div>
+      <h1>Probeer het ensemble zelf</h1>
+      <p class="lead">Stel een inlogpoging in en zie hoe het ensemble-systeem oordeelt. Ontdek welke factoren de risicoscore verhogen.</p>
+      <div class="sim-wrap">
+        <div class="sim-g2">
+          <div class="sfield">
+            <label>Tijdstip</label>
+            <select id="st" onchange="sim()">
+              <option value="0">Kantooruren (9–17u)</option>
+              <option value="1">Avond (18–21u)</option>
+              <option value="3">Nacht (22–05u)</option>
+            </select>
+          </div>
+          <div class="sfield">
+            <label>Land van inlog</label>
+            <select id="sl" onchange="sim()">
+              <option value="0">Nederland</option>
+              <option value="0">België</option>
+              <option value="4">Rusland</option>
+              <option value="4">China</option>
+              <option value="4">Noord-Korea</option>
+            </select>
+          </div>
+          <div class="sfield">
+            <label>Apparaat</label>
+            <select id="sd" onchange="sim()">
+              <option value="0">Bekende laptop</option>
+              <option value="1">Bekende mobiel</option>
+              <option value="3">Onbekend apparaat</option>
+            </select>
+          </div>
+          <div class="sfield">
+            <label>Mislukte pogingen: <span id="flbl">0</span></label>
+            <input type="range" min="0" max="10" step="1" value="0" id="sf" oninput="document.getElementById('flbl').textContent=this.value;sim()">
+          </div>
+          <div class="sfield">
+            <label>IP-wisselingen vandaag: <span id="iplbl">0</span></label>
+            <input type="range" min="0" max="8" step="1" value="0" id="sip" oninput="document.getElementById('iplbl').textContent=this.value;sim()">
+          </div>
+          <div class="sfield">
+            <label>Login gelukt?</label>
+            <select id="sls" onchange="sim()">
+              <option value="1">Ja</option>
+              <option value="0">Nee</option>
+            </select>
+          </div>
+        </div>
+        <div class="drow"><span class="dk">Tijdstip</span><span class="dv" id="rt">Kantooruren</span></div>
+        <div class="drow"><span class="dk">Land</span><span class="dv" id="rl">Nederland</span></div>
+        <div class="drow"><span class="dk">Apparaat</span><span class="dv" id="rd">Bekende laptop</span></div>
+        <div class="drow"><span class="dk">Mislukte pogingen</span><span class="dv" id="rf2">0</span></div>
+        <div style="margin-top:.75rem">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#6e7681;margin-bottom:2px"><span>Risicoscore ensemble</span><span id="rpct">0%</span></div>
+          <div class="risk-bar-outer"><div class="risk-bar-inner" id="rbar" style="width:0%;background:#3fb950"></div></div>
+        </div>
+        <div class="sim-res res-neutral" id="sres">Stel gegevens in voor een oordeel</div>
+        <div class="factors-grid" id="sfactors"></div>
+      </div>
+      <div class="navfoot"><button class="btn btn-g" onclick="go(2)">← Vorige</button><button class="btn btn-p" onclick="go(4)">Volgende les →</button></div>
+    </div>
+
+    <!-- LES 5 -->
+    <div class="slide" id="s4">
+      <div class="les-tag">Les 5 — Ethiek & kennischeck</div>
+      <h1>Verantwoord gebruik van AI</h1>
+      <p class="lead">AI is krachtig — maar ook verantwoordelijkheid. Sluit af met een kennischeck over de module.</p>
+
+      <div class="ethrow"><div class="ethdot"></div><div><div class="etht">Privacy van medewerkers (AVG/GDPR)</div><div class="ethd">Het systeem analyseert gedrag van medewerkers. Dit is wettelijk alleen toegestaan met transparantie: medewerkers moeten weten dat inloggedrag wordt gemonitord en waarvoor.</div></div></div>
+      <div class="ethrow"><div class="ethdot"></div><div><div class="etht">Valse alarmen — de vakantieganger</div><div class="ethd">Een medewerker die op vakantie is in China logt in vanuit een "risicoland" — en wordt onterecht geblokkeerd. Daarom is er altijd een mens die het eindoordeel bevestigt of corrigeert.</div></div></div>
+      <div class="ethrow"><div class="ethdot"></div><div><div class="etht">Geografische discriminatie</div><div class="ethd">Het gebruik van land als risicofactor is effectief maar gevoelig. Het is een <em>signaal</em>, geen blokkeercriterium op zich. Het ensemble combineert altijd meerdere factoren.</div></div></div>
+      <div class="ethrow"><div class="ethdot"></div><div><div class="etht">Gesimuleerde traindata</div><div class="ethd">Het model is getraind op zelf gegenereerde data. In productie is echte historische logindata nodig om de betrouwbaarheid te verhogen.</div></div></div>
+
+      <div style="border-top:1px solid #21262d;margin:1.25rem 0;padding-top:1.25rem">
+        <div style="font-size:14px;font-weight:700;color:#e6edf3;margin-bottom:1rem">Kennischeck — 4 vragen</div>
+
+        <div class="qwrap" id="q1">
+          <div class="qq">1. Hoeveel AI-modellen worden er in dit systeem gebruikt?</div>
+          <div class="qopts">
+            <button class="qo" onclick="ans(this,'q1',false,'Er worden 4 modellen gebruikt: Decision Tree, Random Forest, XGBoost én Isolation Forest.')">1 — alleen een Decision Tree</button>
+            <button class="qo" onclick="ans(this,'q1',false,'Er worden 4 modellen gebruikt: Decision Tree, Random Forest, XGBoost én Isolation Forest.')">3 — Decision Tree, Random Forest en XGBoost</button>
+            <button class="qo" onclick="ans(this,'q1',true,'')">4 — Decision Tree, Random Forest, XGBoost en Isolation Forest</button>
+          </div>
+          <div class="qfb" id="q1fb"></div>
+        </div>
+
+        <div class="qwrap" id="q2">
+          <div class="qq">2. Wat maakt de Isolation Forest uniek ten opzichte van de andere 3 modellen?</div>
+          <div class="qopts">
+            <button class="qo" onclick="ans(this,'q2',false,'XGBoost heeft juist de hoogste accuracy van de 3 supervised modellen.')">Het heeft de hoogste accuracy</button>
+            <button class="qo" onclick="ans(this,'q2',true,'')">Het heeft geen labels nodig — het is unsupervised en detecteert puur op basis van "anders zijn"</button>
+            <button class="qo" onclick="ans(this,'q2',false,'Decision Tree is juist het meest uitlegbare model — je kunt de beslisregels letterlijk lezen.')">Het is het meest uitlegbare model</button>
+          </div>
+          <div class="qfb" id="q2fb"></div>
+        </div>
+
+        <div class="qwrap" id="q3">
+          <div class="qq">3. Waarom is recall belangrijker dan accuracy in een beveiligingssysteem?</div>
+          <div class="qopts">
+            <button class="qo" onclick="ans(this,'q3',false,'Accuracy is zeker ook nuttig, maar recall is specifiek belangrijk omdat het over gemiste hackers gaat.')">Accuracy is altijd minder belangrijk dan recall</button>
+            <button class="qo" onclick="ans(this,'q3',true,'')">Een gemiste hacker (false negative) is veel gevaarlijker dan een onterecht geblokkeerde medewerker (false positive)</button>
+            <button class="qo" onclick="ans(this,'q3',false,'Recall gaat over het herkennen van verdachte logins, niet over snelheid.')">Recall bepaalt hoe snel het systeem reageert</button>
+          </div>
+          <div class="qfb" id="q3fb"></div>
+        </div>
+
+        <div class="qwrap" id="q4">
+          <div class="qq">4. Welk ethisch risico geldt voor een medewerker op vakantie in het buitenland?</div>
+          <div class="qopts">
+            <button class="qo" onclick="ans(this,'q4',false,'Het systeem geeft een signaal — maar er is altijd een mens die het eindoordeel bevestigt.')">Het systeem blokkeert de medewerker permanent</button>
+            <button class="qo" onclick="ans(this,'q4',true,'')">De medewerker kan onterecht als verdacht worden gemarkeerd omdat het land als risicofactor geldt</button>
+            <button class="qo" onclick="ans(this,'q4',false,'Het systeem analyseert gedragspatronen, niet werkroosters.')">Het systeem herkent automatisch dat de medewerker op vakantie is</button>
+          </div>
+          <div class="qfb" id="q4fb"></div>
+        </div>
+
+        <div id="score-section" style="display:none">
+          <div class="score-box">
+            <div class="score-circle"><div class="score-n" id="scoren">0/4</div><div class="score-lbl">score</div></div>
+            <div class="score-msg" id="scoremsg"></div>
+            <div class="score-sub" id="scoresub"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="navfoot">
+        <button class="btn btn-g" onclick="go(3)">← Vorige</button>
+        <button class="btn btn-g" onclick="restart()">↺ Opnieuw</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var cur=0,done=[false,false,false,false,false],qscore=0,qdone=0;
+
+function go(n){
+  done[cur]=true;
+  document.getElementById('s'+cur).classList.remove('active');
+  document.getElementById('nav'+cur).classList.remove('active');
+  updateIcon(cur,true);
+  cur=n;
+  document.getElementById('s'+n).classList.add('active');
+  document.getElementById('nav'+n).classList.add('active');
+  updateIcon(n,false);
+  document.getElementById('les-badge').textContent='Les '+(n+1)+' van 5';
+  document.getElementById('progbar').style.width=(n/5*100)+'%';
+}
+function updateIcon(n,isDone){
+  var el=document.getElementById('ic'+n);
+  el.className='sid-num';
+  if(n===cur&&!isDone){el.classList.add('cur');}
+  else if(done[n]){el.classList.add('done');el.textContent='✓';}
+}
+
+var tijdL=['Kantooruren (9–17u)','Avond (18–21u)','Nacht (22–05u)'];
+var landL=['Nederland','België','Rusland','China','Noord-Korea'];
+var devL=['Bekende laptop','Bekende mobiel','Onbekend apparaat'];
+
+function sim(){
+  var t=parseInt(document.getElementById('st').value);
+  var l=parseInt(document.getElementById('sl').value);
+  var d=parseInt(document.getElementById('sd').value);
+  var f=parseInt(document.getElementById('sf').value);
+  var ip=parseInt(document.getElementById('sip').value);
+  var ls=parseInt(document.getElementById('sls').value);
+  var to=document.getElementById('st'),lo=document.getElementById('sl'),dv=document.getElementById('sd');
+  document.getElementById('rt').textContent=to.options[to.selectedIndex].text;
+  document.getElementById('rl').textContent=lo.options[lo.selectedIndex].text;
+  document.getElementById('rd').textContent=dv.options[dv.selectedIndex].text;
+  document.getElementById('rf2').textContent=f;
+
+  var score=t*0.12+l*0.18+d*0.15+Math.min(f,8)*0.05+ip*0.04+(1-ls)*0.1;
+  score=Math.min(score,1);
+  var pct=Math.round(score*100);
+  document.getElementById('rpct').textContent=pct+'%';
+  var bar=document.getElementById('rbar');
+  bar.style.width=pct+'%';
+  var col=pct<30?'#3fb950':pct<55?'#f39c12':pct<75?'#e67e22':'#f85149';
+  bar.style.background=col;
+
+  var res=document.getElementById('sres');
+  var actions=['Doorlaten — standaard logging','Sessieduur beperkt','MFA vereist — admin notificatie','Account geblokkeerd — IP op blacklist'];
+  var lvls=['✓  VEILIG','⚠  LET OP','🔶  WAARSCHUWING','🚨  KRITIEK'];
+  var classes=['res-safe','res-warn','res-danger res-danger','res-danger'];
+  var idx=pct<30?0:pct<55?1:pct<75?2:3;
+  res.className='sim-res '+classes[idx];
+  res.textContent=lvls[idx]+' — '+actions[idx];
+
+  var factors=[
+    {k:'Tijdstip',v:t===0?'OK':'Riskant',risk:t>0},
+    {k:'Land',v:l===0?'Veilig':'Risicoland',risk:l>0},
+    {k:'Apparaat',v:d===0?'Bekend':d===1?'Bekend':'Onbekend',risk:d>1},
+    {k:'Mislukte pogingen',v:f,risk:f>3},
+    {k:'IP-wisselingen',v:ip,risk:ip>2},
+    {k:'Login gelukt',v:ls?'Ja':'Nee',risk:ls===0}
+  ];
+  var fhtml='';
+  factors.forEach(function(fa){
+    fhtml+='<div class="factor"><span class="fk">'+fa.k+'</span><span class="'+(fa.risk?'fv-risk':'fv-ok')+'">'+fa.v+'</span></div>';
+  });
+  document.getElementById('sfactors').innerHTML=fhtml;
+}
+
+function ans(btn,qid,correct,wrongMsg){
+  var block=document.getElementById(qid);
+  block.querySelectorAll('.qo').forEach(function(b){b.disabled=true;});
+  var fb=document.getElementById(qid+'fb');
+  if(correct){
+    btn.classList.add('correct');
+    fb.className='qfb show good';
+    fb.textContent='Correct!';
+    qscore++;
+  } else {
+    btn.classList.add('wrong');
+    fb.className='qfb show bad';
+    fb.textContent=wrongMsg;
+    block.querySelectorAll('.qo').forEach(function(b){if(b!==btn)b.style.opacity='.4';});
+  }
+  qdone++;
+  if(qdone===4)setTimeout(showScore,500);
+}
+
+function showScore(){
+  document.getElementById('score-section').style.display='block';
+  document.getElementById('scoren').textContent=qscore+'/4';
+  var msgs=[['Probeer opnieuw!','Lees de lessen nog eens door.'],['Goed begin!','Herhaal les 2 voor de modellen.'],['Goed bezig!','Bijna alles goed.'],['Bijna perfect!','Nog één foutje.'],['Uitstekend!','Alles correct. Top gedaan!']];
+  document.getElementById('scoremsg').textContent=msgs[qscore][0];
+  document.getElementById('scoresub').textContent=msgs[qscore][1];
+  document.getElementById('progbar').style.width='100%';
+  done[4]=true;updateIcon(4,true);
+}
+
+function restart(){
+  qscore=0;qdone=0;done=[false,false,false,false,false];
+  document.querySelectorAll('.qo').forEach(function(b){b.disabled=false;b.className='qo';b.style.opacity='1';});
+  document.querySelectorAll('.qfb').forEach(function(f){f.className='qfb';});
+  document.getElementById('score-section').style.display='none';
+  go(0);
+  document.getElementById('progbar').style.width='0%';
+  for(var i=0;i<5;i++){var ic=document.getElementById('ic'+i);ic.className='sid-num';ic.textContent=i+1;}
+  document.getElementById('ic0').classList.add('cur');
+}
+
+sim();
+</script>
+</body>
+</html>
